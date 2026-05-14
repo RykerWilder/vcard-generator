@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Logo minimale vCard generator</title>
+  <desc id="desc">Logo semplice con card arrotondata e segno QR minimale in teal.</desc>
+  <rect x="20" y="28" width="88" height="72" rx="18" fill="none" stroke="#0F766E" stroke-width="8"/>
+  <rect x="34" y="46" width="34" height="8" rx="4" fill="#0F766E"/>
+  <rect x="34" y="62" width="24" height="8" rx="4" fill="#0F766E" opacity="0.72"/>
+  <rect x="78" y="46" width="16" height="16" rx="3" fill="none" stroke="#0F766E" stroke-width="6"/>
+  <rect x="98" y="46" width="8" height="8" rx="2" fill="#0F766E"/>
+  <rect x="78" y="66" width="8" height="8" rx="2" fill="#0F766E"/>
+  <rect x="90" y="66" width="16" height="16" rx="3" fill="#0F766E"/>
+</svg>
