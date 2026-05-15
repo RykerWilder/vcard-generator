@@ -4,6 +4,7 @@ import { QRCode } from "react-qrcode-logo";
 const initialForm = {
   firstName: "",
   lastName: "",
+  phonePrefix: "+39",
   phone: "",
   email: "",
   company: "",
@@ -12,6 +13,16 @@ const initialForm = {
   address: "",
   note: "",
 };
+
+const phonePrefixes = [
+  { value: "+39", label: "🇮🇹 +39" },
+  { value: "+41", label: "🇨🇭 +41" },
+  { value: "+33", label: "🇫🇷 +33" },
+  { value: "+49", label: "🇩🇪 +49" },
+  { value: "+34", label: "🇪🇸 +34" },
+  { value: "+44", label: "🇬🇧 +44" },
+  { value: "+1", label: "🇺🇸 +1" },
+];
 
 function escapeVCard(value) {
   return value
@@ -30,9 +41,19 @@ function App() {
   const [logoName, setLogoName] = useState("");
   const qrRef = useRef(null);
 
+  const fieldClass =
+    "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 shadow-sm outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100";
+
+  const selectClass = `${fieldClass} appearance-none pr-10`;
+
   const fullName = useMemo(() => {
     return [form.firstName, form.lastName].filter(Boolean).join(" ").trim();
   }, [form.firstName, form.lastName]);
+
+  const fullPhone = useMemo(() => {
+    if (!form.phone) return "";
+    return `${form.phonePrefix} ${form.phone}`.trim();
+  }, [form.phonePrefix, form.phone]);
 
   const vcard = useMemo(() => {
     const lines = [
@@ -44,7 +65,7 @@ function App() {
 
     if (form.company) lines.push(`ORG:${escapeVCard(form.company)}`);
     if (form.role) lines.push(`TITLE:${escapeVCard(form.role)}`);
-    if (form.phone) lines.push(`TEL;TYPE=CELL:${escapeVCard(form.phone)}`);
+    if (fullPhone) lines.push(`TEL;TYPE=CELL:${escapeVCard(fullPhone)}`);
     if (form.email) lines.push(`EMAIL:${escapeVCard(form.email)}`);
     if (form.website) lines.push(`URL:${escapeVCard(form.website)}`);
     if (form.address) lines.push(`ADR:;;${escapeVCard(form.address)};;;;`);
@@ -52,7 +73,7 @@ function App() {
 
     lines.push("END:VCARD");
     return lines.join("\n");
-  }, [form, fullName]);
+  }, [form, fullName, fullPhone]);
 
   function generateQr() {
     if (!fullName || (!form.phone && !form.email)) {
@@ -116,7 +137,6 @@ function App() {
   const fields = [
     ["firstName", "First Name"],
     ["lastName", "Last name"],
-    ["phone", "Phone"],
     ["email", "Email"],
     ["company", "Company"],
     ["role", "Role"],
@@ -137,7 +157,9 @@ function App() {
             {fields.map(([key, label]) => (
               <div
                 key={key}
-                className={key === "website" ? "md:col-span-2" : ""}
+                className={
+                  key === "website" || key === "email" ? "md:col-span-2" : ""
+                }
               >
                 <label
                   htmlFor={key}
@@ -159,10 +181,65 @@ function App() {
                     setForm((prev) => ({ ...prev, [key]: e.target.value }))
                   }
                   placeholder={`Insert ${label.toLowerCase()}`}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
+                  className={fieldClass}
                 />
               </div>
             ))}
+
+            <div className="md:col-span-2">
+              <label
+                htmlFor="phone"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                Phone
+              </label>
+
+              <div className="grid gap-3 sm:grid-cols-[140px_1fr]">
+                <div className="relative">
+                  <select
+                    id="phonePrefix"
+                    value={form.phonePrefix}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        phonePrefix: e.target.value,
+                      }))
+                    }
+                    className={selectClass}
+                  >
+                    {phonePrefixes.map((prefix) => (
+                      <option key={prefix.value} value={prefix.value}>
+                        {prefix.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  <svg
+                    className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.51a.75.75 0 01-1.08 0l-4.25-4.51a.75.75 0 01.02-1.06z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+
+                <input
+                  id="phone"
+                  type="text"
+                  value={form.phone}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, phone: e.target.value }))
+                  }
+                  placeholder="Insert phone number"
+                  className={fieldClass}
+                />
+              </div>
+            </div>
 
             <div className="md:col-span-2">
               <label
@@ -179,7 +256,7 @@ function App() {
                   setForm((prev) => ({ ...prev, address: e.target.value }))
                 }
                 placeholder="Insert address"
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
+                className={fieldClass}
               />
             </div>
 
@@ -198,7 +275,7 @@ function App() {
                   setForm((prev) => ({ ...prev, note: e.target.value }))
                 }
                 placeholder="Additional information"
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
+                className={fieldClass}
               />
             </div>
           </div>
@@ -247,7 +324,7 @@ function App() {
             <div className="mt-4 space-y-2 text-sm text-slate-600">
               <p>{form.role || "Role"}</p>
               <p>{form.company || "Company"}</p>
-              <p>{form.phone || "Phone"}</p>
+              <p>{fullPhone || "Phone"}</p>
               <p>{form.email || "Email"}</p>
               <p className="break-all">{form.website || "Website"}</p>
               <p>{form.address || "Address"}</p>
@@ -313,7 +390,7 @@ function App() {
                     type="color"
                     value={qrColor}
                     onChange={(e) => setQrColor(e.target.value)}
-                    className="h-12 w-full rounded-2xl border border-white/10 bg-white p-2"
+                    className="h-12 w-full rounded-2xl border border-white/10 bg-white p-2 shadow-sm outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
                   />
                 </div>
 
@@ -329,7 +406,7 @@ function App() {
                     type="color"
                     value={bgColor}
                     onChange={(e) => setBgColor(e.target.value)}
-                    className="h-12 w-full rounded-2xl border border-white/10 bg-white p-2"
+                    className="h-12 w-full rounded-2xl border border-white/10 bg-white p-2 shadow-sm outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
                   />
                 </div>
               </div>
@@ -346,7 +423,7 @@ function App() {
                   type="file"
                   accept="image/png,image/jpeg,image/jpg,image/svg+xml"
                   onChange={handleLogoUpload}
-                  className="block w-full rounded-2xl border border-white/10 bg-slate-800 px-4 py-3 text-sm text-slate-200 file:mr-4 file:rounded-xl file:border-0 file:bg-teal-50 file:px-4 file:py-2 file:font-semibold file:text-teal-700 hover:file:bg-teal-100"
+                  className="block w-full rounded-2xl border border-white/10 bg-slate-800 px-4 py-3 text-sm text-slate-200 shadow-sm file:mr-4 file:rounded-xl file:border-0 file:bg-teal-50 file:px-4 file:py-2 file:font-semibold file:text-teal-700 hover:file:bg-teal-100"
                 />
               </div>
 
