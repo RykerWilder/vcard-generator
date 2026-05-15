@@ -269,7 +269,7 @@ function App() {
               </label>
               <textarea
                 id="note"
-                rows="4"
+                rows="10"
                 value={form.note}
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, note: e.target.value }))
