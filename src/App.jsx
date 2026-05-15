@@ -32,6 +32,21 @@ function escapeVCard(value) {
     .replace(/;/g, "\\;");
 }
 
+function isHexColor(value) {
+  return /^#([0-9A-Fa-f]{6})$/.test(value);
+}
+
+function normalizeHexInput(value) {
+  let next = value.trim();
+
+  if (!next.startsWith("#")) {
+    next = `#${next}`;
+  }
+
+  next = `#${next.slice(1).replace(/[^0-9A-Fa-f]/g, "").slice(0, 6)}`;
+  return next;
+}
+
 function App() {
   const [form, setForm] = useState(initialForm);
   const [qrVisible, setQrVisible] = useState(false);
@@ -43,6 +58,9 @@ function App() {
 
   const fieldClass =
     "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 shadow-sm outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100";
+
+  const darkFieldClass =
+    "w-full rounded-2xl border border-white/10 bg-slate-800 px-4 py-3 text-slate-100 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-4 focus:ring-teal-100";
 
   const selectClass = `${fieldClass} appearance-none pr-10`;
 
@@ -132,6 +150,18 @@ function App() {
       .replace(/\s+/g, "-")
       .toLowerCase();
     link.click();
+  }
+
+  function handleHexInput(setter, value) {
+    setter(normalizeHexInput(value));
+  }
+
+  function handleHexBlur(setter, value, fallback) {
+    if (isHexColor(value)) {
+      setter(value.toLowerCase());
+    } else {
+      setter(fallback);
+    }
   }
 
   const fields = [
@@ -385,13 +415,29 @@ function App() {
                   >
                     QR color
                   </label>
-                  <input
-                    id="qrColor"
-                    type="color"
-                    value={qrColor}
-                    onChange={(e) => setQrColor(e.target.value)}
-                    className="h-12 w-full rounded-2xl border border-white/10 bg-white p-2 shadow-sm outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
-                  />
+
+                  <div className="grid gap-3 sm:grid-cols-[72px_1fr]">
+                    <input
+                      id="qrColor"
+                      type="color"
+                      value={isHexColor(qrColor) ? qrColor : "#0f172a"}
+                      onChange={(e) => setQrColor(e.target.value.toLowerCase())}
+                      className="h-12 w-full rounded-2xl border border-white/10 bg-white p-2 shadow-sm outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
+                    />
+
+                    <input
+                      id="qrColorHex"
+                      type="text"
+                      inputMode="text"
+                      value={qrColor}
+                      onChange={(e) => handleHexInput(setQrColor, e.target.value)}
+                      onBlur={() =>
+                        handleHexBlur(setQrColor, qrColor, "#0f172a")
+                      }
+                      placeholder="#0f172a"
+                      className={darkFieldClass}
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -401,13 +447,29 @@ function App() {
                   >
                     Background color
                   </label>
-                  <input
-                    id="bgColor"
-                    type="color"
-                    value={bgColor}
-                    onChange={(e) => setBgColor(e.target.value)}
-                    className="h-12 w-full rounded-2xl border border-white/10 bg-white p-2 shadow-sm outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
-                  />
+
+                  <div className="grid gap-3 sm:grid-cols-[72px_1fr]">
+                    <input
+                      id="bgColor"
+                      type="color"
+                      value={isHexColor(bgColor) ? bgColor : "#ffffff"}
+                      onChange={(e) => setBgColor(e.target.value.toLowerCase())}
+                      className="h-12 w-full rounded-2xl border border-white/10 bg-white p-2 shadow-sm outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
+                    />
+
+                    <input
+                      id="bgColorHex"
+                      type="text"
+                      inputMode="text"
+                      value={bgColor}
+                      onChange={(e) => handleHexInput(setBgColor, e.target.value)}
+                      onBlur={() =>
+                        handleHexBlur(setBgColor, bgColor, "#ffffff")
+                      }
+                      placeholder="#ffffff"
+                      className={darkFieldClass}
+                    />
+                  </div>
                 </div>
               </div>
 
