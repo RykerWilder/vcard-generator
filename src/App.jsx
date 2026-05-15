@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import QRCode from "qrcode";
+import { useMemo, useRef, useState } from "react";
+import { QRCode } from "react-qrcode-logo";
 
 const initialForm = {
   firstName: "",
@@ -23,7 +23,12 @@ function escapeVCard(value) {
 
 function App() {
   const [form, setForm] = useState(initialForm);
-  const [qrCode, setQrCode] = useState("");
+  const [qrVisible, setQrVisible] = useState(false);
+  const [qrColor, setQrColor] = useState("#0f172a");
+  const [bgColor, setBgColor] = useState("#ffffff");
+  const [logoImage, setLogoImage] = useState("");
+  const [logoName, setLogoName] = useState("");
+  const qrRef = useRef(null);
 
   const fullName = useMemo(() => {
     return [form.firstName, form.lastName].filter(Boolean).join(" ").trim();
@@ -49,24 +54,15 @@ function App() {
     return lines.join("\n");
   }, [form, fullName]);
 
-  async function generateQr() {
+  function generateQr() {
     if (!fullName || (!form.phone && !form.email)) {
       alert(
-        "Please include at least your full name and a contact number (phone number or email address).",
+        "Please include at least your full name and a contact number (phone number or email address)."
       );
       return;
     }
 
-    const dataUrl = await QRCode.toDataURL(vcard, {
-      width: 360,
-      margin: 2,
-      color: {
-        dark: "#0f172a",
-        light: "#ffffff",
-      },
-    });
-
-    setQrCode(dataUrl);
+    setQrVisible(true);
   }
 
   function downloadFile(content, filename, type) {
@@ -83,14 +79,35 @@ function App() {
     const filename = `${fullName || "contatto"}.vcf`
       .replace(/\s+/g, "-")
       .toLowerCase();
+
     downloadFile(vcard, filename, "text/vcard;charset=utf-8");
   }
 
+  function handleLogoUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLogoName(file.name);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setLogoImage(reader.result);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeLogo() {
+    setLogoImage("");
+    setLogoName("");
+  }
+
   function downloadQr() {
-    if (!qrCode) return;
+    const canvas = qrRef.current?.querySelector("canvas");
+    if (!canvas) return;
+
     const link = document.createElement("a");
-    link.href = qrCode;
-    link.download = `${fullName || "qrcode-contatto"}.png`
+    link.href = canvas.toDataURL("image/png");
+    link.download = `${fullName || "qrcode-contatto"}-qr.png`
       .replace(/\s+/g, "-")
       .toLowerCase();
     link.click();
@@ -122,7 +139,12 @@ function App() {
                 key={key}
                 className={key === "website" ? "md:col-span-2" : ""}
               >
-                <label htmlFor={key}>{label}</label>
+                <label
+                  htmlFor={key}
+                  className="mb-2 block text-sm font-medium text-slate-700"
+                >
+                  {label}
+                </label>
                 <input
                   id={key}
                   type={
@@ -137,12 +159,18 @@ function App() {
                     setForm((prev) => ({ ...prev, [key]: e.target.value }))
                   }
                   placeholder={`Insert ${label.toLowerCase()}`}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
                 />
               </div>
             ))}
 
             <div className="md:col-span-2">
-              <label htmlFor="address">Address</label>
+              <label
+                htmlFor="address"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                Address
+              </label>
               <input
                 id="address"
                 type="text"
@@ -151,11 +179,17 @@ function App() {
                   setForm((prev) => ({ ...prev, address: e.target.value }))
                 }
                 placeholder="Insert address"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label htmlFor="note">Notes</label>
+              <label
+                htmlFor="note"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                Notes
+              </label>
               <textarea
                 id="note"
                 rows="4"
@@ -164,6 +198,7 @@ function App() {
                   setForm((prev) => ({ ...prev, note: e.target.value }))
                 }
                 placeholder="Additional information"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
               />
             </div>
           </div>
@@ -175,14 +210,23 @@ function App() {
             >
               Generate QR code
             </button>
+
             <button
               onClick={downloadVCard}
               className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-100"
             >
               Download vcf
             </button>
+
             <button
-              onClick={() => setForm(initialForm)}
+              onClick={() => {
+                setForm(initialForm);
+                setQrVisible(false);
+                setLogoImage("");
+                setLogoName("");
+                setQrColor("#0f172a");
+                setBgColor("#ffffff");
+              }}
               className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               Clear
@@ -206,6 +250,7 @@ function App() {
               <p>{form.phone || "Phone"}</p>
               <p>{form.email || "Email"}</p>
               <p className="break-all">{form.website || "Website"}</p>
+              <p>{form.address || "Address"}</p>
             </div>
           </div>
 
@@ -217,7 +262,8 @@ function App() {
                   Download to import contact
                 </p>
               </div>
-              {qrCode && (
+
+              {qrVisible && (
                 <button
                   onClick={downloadQr}
                   className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-200"
@@ -228,11 +274,94 @@ function App() {
             </div>
 
             <div className="mt-5 flex min-h-[320px] items-center justify-center rounded-3xl border border-dashed border-white/15 bg-slate-900/40 p-6">
-              <img
-                src={qrCode}
-                alt="QR code della vCard"
-                className="h-auto w-full max-w-[280px] rounded-2xl bg-white p-3"
-              />
+              {qrVisible ? (
+                <div ref={qrRef} className="rounded-2xl bg-white p-3">
+                  <QRCode
+                    value={vcard}
+                    size={280}
+                    ecLevel="H"
+                    qrStyle="squares"
+                    fgColor={qrColor}
+                    bgColor={bgColor}
+                    logoImage={logoImage || undefined}
+                    logoWidth={56}
+                    logoHeight={56}
+                    logoPadding={6}
+                    logoPaddingStyle="square"
+                    removeQrCodeBehindLogo={true}
+                    quietZone={10}
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400">
+                  Generate the QR code to see the preview.
+                </p>
+              )}
+            </div>
+
+            <div className="mt-6 space-y-5 rounded-3xl border border-white/10 bg-slate-900/50 p-5">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="qrColor"
+                    className="mb-2 block text-sm font-medium text-slate-200"
+                  >
+                    QR color
+                  </label>
+                  <input
+                    id="qrColor"
+                    type="color"
+                    value={qrColor}
+                    onChange={(e) => setQrColor(e.target.value)}
+                    className="h-12 w-full rounded-2xl border border-white/10 bg-white p-2"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="bgColor"
+                    className="mb-2 block text-sm font-medium text-slate-200"
+                  >
+                    Background color
+                  </label>
+                  <input
+                    id="bgColor"
+                    type="color"
+                    value={bgColor}
+                    onChange={(e) => setBgColor(e.target.value)}
+                    className="h-12 w-full rounded-2xl border border-white/10 bg-white p-2"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="logoUpload"
+                  className="mb-2 block text-sm font-medium text-slate-200"
+                >
+                  Company logo
+                </label>
+                <input
+                  id="logoUpload"
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                  onChange={handleLogoUpload}
+                  className="block w-full rounded-2xl border border-white/10 bg-slate-800 px-4 py-3 text-sm text-slate-200 file:mr-4 file:rounded-xl file:border-0 file:bg-teal-50 file:px-4 file:py-2 file:font-semibold file:text-teal-700 hover:file:bg-teal-100"
+                />
+              </div>
+
+              {logoName && (
+                <div className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3 text-sm text-slate-200">
+                  <span className="truncate">Loaded logo: {logoName}</span>
+                  <button
+                    type="button"
+                    onClick={removeLogo}
+                    className="ml-4 rounded-xl border border-white/10 bg-white px-3 py-1.5 font-medium text-slate-900 hover:bg-slate-200"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </aside>
