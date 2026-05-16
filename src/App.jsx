@@ -43,7 +43,10 @@ function normalizeHexInput(value) {
     next = `#${next}`;
   }
 
-  next = `#${next.slice(1).replace(/[^0-9A-Fa-f]/g, "").slice(0, 6)}`;
+  next = `#${next
+    .slice(1)
+    .replace(/[^0-9A-Fa-f]/g, "")
+    .slice(0, 6)}`;
   return next;
 }
 
@@ -96,7 +99,7 @@ function App() {
   function generateQr() {
     if (!fullName || (!form.phone && !form.email)) {
       alert(
-        "Please include at least your full name and a contact number (phone number or email address)."
+        "Please include at least your full name and a contact number (phone number or email address).",
       );
       return;
     }
@@ -430,7 +433,9 @@ function App() {
                       type="text"
                       inputMode="text"
                       value={qrColor}
-                      onChange={(e) => handleHexInput(setQrColor, e.target.value)}
+                      onChange={(e) =>
+                        handleHexInput(setQrColor, e.target.value)
+                      }
                       onBlur={() =>
                         handleHexBlur(setQrColor, qrColor, "#0f172a")
                       }
@@ -462,7 +467,9 @@ function App() {
                       type="text"
                       inputMode="text"
                       value={bgColor}
-                      onChange={(e) => handleHexInput(setBgColor, e.target.value)}
+                      onChange={(e) =>
+                        handleHexInput(setBgColor, e.target.value)
+                      }
                       onBlur={() =>
                         handleHexBlur(setBgColor, bgColor, "#ffffff")
                       }
@@ -505,6 +512,34 @@ function App() {
           </div>
         </aside>
       </div>
+      <footer className="mx-auto mt-8 max-w-6xl rounded-3xl border border-white/70 bg-white/80 px-6 py-4 text-sm text-slate-600 shadow-soft backdrop-blur">
+        <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+          <p>
+            © {new Date().getFullYear()} | Developed by{" "}
+            <span className="font-medium text-slate-800">RykerWilder</span>
+          </p>
+
+          <div className="flex items-center gap-4">
+            <a
+              href="https://www.linkedin.com/in/fabio-masciarelli-1605b7304/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-teal-700 transition hover:text-teal-800"
+            >
+              LinkedIn
+            </a>
+
+            <a
+              href="https://github.com/RykerWilder"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-teal-700 transition hover:text-teal-800"
+            >
+              GitHub
+            </a>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
